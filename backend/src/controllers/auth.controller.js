@@ -4,7 +4,7 @@ import { upsertStreamUser } from "../lib/stream.js";
 
 export async function signup(req, res) {
     const { email, password, fullName } = req.body;
-
+    console.log("Signup request received:", { email, fullName });
     try {
         if (!email || !password || !fullName) {
             return res
@@ -29,7 +29,7 @@ export async function signup(req, res) {
             });
         }
 
-        const idx = Math.floor(Math.random() * 100) + 1;
+        const idx = Math.floor(Math.random() * 100) + 1; // generate a number b/w 1 and 100
         const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
 
         const newUser = await User.create({
@@ -60,8 +60,8 @@ export async function signup(req, res) {
 
         res.cookie("jwt", token, {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-            httpOnly: true,
-            sameSite: "strict",
+            httpOnly: true, // prevent XSS attacks
+            sameSite: "strict", // prevent CSRF attack
             secure: process.env.NODE_ENV === "production",
         });
 
