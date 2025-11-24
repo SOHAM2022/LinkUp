@@ -19,7 +19,9 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: process.env.NODE_ENV === "production" 
+        ? process.env.FRONTEND_URL || true // Allow any origin in production if FRONTEND_URL not set
+        : "http://localhost:5173",
     credentials: true // allow frontend to send cookies
 }))
 app.use(cookieParser());
@@ -31,6 +33,10 @@ app.use("/api/notifications", notificationRoutes);
 
 if(process.env.NODE_ENV === "production"){
     app.use(express.static(path.join(__dirname,"../frontend/dist")));
+
+    app.get("*",(req,res)=>{
+        res.sendFile(path.join(__dirname,"../frontend","dist","index.html"));
+    })
 }
 
 app.listen(PORT, () => {

@@ -22,18 +22,8 @@ const App = () => {
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
 
-  // Add debugging
-  console.log("App render:", { 
-    isLoading, 
-    authUser: authUser ? 'User object exists' : 'No user', 
-    isAuthenticated, 
-    isOnboarded,
-    timestamp: new Date().toLocaleTimeString()
-  });
-
   // Show loading while checking authentication
   if (isLoading) {
-    console.log("Showing PageLoader due to isLoading");
     return <PageLoader />;
   }
 

@@ -11,25 +11,16 @@ const useAuthUser = () => {
     gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    retryOnMount: false,
   });
 
-  // Add debugging logs
-  console.log("Auth Query State:", {
-    isLoading: authUser.isLoading,
-    isFetching: authUser.isFetching,
-    data: authUser.data,
-    error: authUser.error,
-    isError: authUser.isError,
-    status: authUser.status,
-    user: authUser.data?.user
-  });
-
-  // Only return null when we're certain the user is not authenticated
+  // Handle 401 errors properly - user is not authenticated
   // Don't treat loading states as unauthenticated
-  const user = authUser.isError ? null : authUser.data?.user;
+  const is401Error = authUser.error?.response?.status === 401;
+  const user = (authUser.isError && is401Error) ? null : authUser.data?.user;
   
   return {
-    isLoading: authUser.isLoading,
+    isLoading: authUser.isLoading && !is401Error,
     authUser: user
   };
 };
