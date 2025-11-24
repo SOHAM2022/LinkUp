@@ -1,6 +1,7 @@
 import { extractPollEnrichedData } from "stream-chat";
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { createNotification } from "./notification.controller.js";
 
 export async function getRecommendedUsers(req, res) {
     try {
@@ -10,7 +11,7 @@ export async function getRecommendedUsers(req, res) {
         const recommendedUsers = await User.find({
             $and: [
                 { _id: { $ne: currentID } }, // exclude current user
-                { $id: { $nin: currentUser.friends } }, // exclude friends
+                { _id: { $nin: currentUser.friends } }, // exclude friends
                 { isOnboarded: true },
             ],
         });
@@ -90,6 +91,16 @@ export async function sendFriendRequest(req, res) {
             sender: myId,
             recipient: recipientId,
         });
+
+        // Create notification for the recipient
+        await createNotification(
+            recipientId,
+            myId,
+            "friend_request",
+            `${req.user.fullName} sent you a friend request`,
+            { friendRequestId: friendRequest._id }
+        );
+
         res.status(201).json(friendRequest);
     } catch (error) {
         console.log("Error in sendFriendRequest controller:", error);
@@ -100,7 +111,7 @@ export async function sendFriendRequest(req, res) {
 export async function acceptFriendRequest(req, res) {
     try {
         const { id: requestId } = req.params;
-        const friendRequest = await FriendRequest.findByID(requestId);
+        const friendRequest = await FriendRequest.findById(requestId).populate('sender', 'fullName');
 
         if (!friendRequest) {
             return res
@@ -127,11 +138,20 @@ export async function acceptFriendRequest(req, res) {
             $addToSet: { friends: friendRequest.recipient },
         });
 
+        // Create notification for the sender (person who sent the request)
+        await createNotification(
+            friendRequest.sender,
+            req.user.id,
+            "friend_accepted",
+            `${req.user.fullName} accepted your friend request`,
+            { friendRequestId: friendRequest._id }
+        );
+
         res.status(200).json({
             message: "friend request accepted successfully.",
         });
     } catch (err) {
-        log("Error in acceptFriendRequest controller:", err);
+        console.log("Error in acceptFriendRequest controller:", err);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }

@@ -1,88 +1,123 @@
-import React from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router";
+
 import HomePage from "./pages/HomePage.jsx";
-import SignupPage from "./pages/SignUpPage.jsx";
+import SignUpPage from "./pages/SignUpPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
-import OnboardingPage from "./pages/OnboardingPage.jsx";
+import NotificationsPage from "./pages/NotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
-import NotificationsPage from "./pages/NotificationsPage.jsx";
-import { toast, Toaster } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "./lib/axios.js";
-const App = () => {
-  // axios
-  // react query tanstack query
+import OnboardingPage from "./pages/OnboardingPage.jsx";
 
-  const {
-    data: authData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      try {
-        const res = await axiosInstance.get("/auth/me");
-        return res.data;
-      } catch (err) {
-        console.error("Auth check failed:", err);
-        return null;
-      }
-    },
-    retry: false, // auth check
+import { Toaster } from "react-hot-toast";
+
+import PageLoader from "./components/PageLoader.jsx";
+import useAuthUser from "./hooks/useAuthUser.js";
+import Layout from "./components/Layout.jsx";
+import { useThemeStore } from "./store/useThemeStore.js";
+
+const App = () => {
+  const { isLoading, authUser } = useAuthUser();
+  const { theme } = useThemeStore();
+
+  const isAuthenticated = Boolean(authUser);
+  const isOnboarded = authUser?.isOnboarded;
+
+  // Add debugging
+  console.log("App render:", { 
+    isLoading, 
+    authUser: authUser ? 'User object exists' : 'No user', 
+    isAuthenticated, 
+    isOnboarded,
+    timestamp: new Date().toLocaleTimeString()
   });
 
-  const authUser = authData?.user;
-  console.log("authUser:", authUser);
-  console.log("isLoading:", isLoading);
-  console.log("error:", error);
-
+  // Show loading while checking authentication
   if (isLoading) {
-    return (
-      <div
-        className="h-screen flex items-center justify-center"
-        data-theme="night"
-      >
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
+    console.log("Showing PageLoader due to isLoading");
+    return <PageLoader />;
   }
 
   return (
-    <div className="h-screen" data-theme="night">
+    <div className="h-screen" data-theme={theme}>
       <Routes>
         <Route
           path="/"
-          element={authUser ? <HomePage /> : <Navigate to="/login" />}
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <HomePage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
         />
         <Route
           path="/signup"
-          element={!authUser ? <SignupPage /> : <Navigate to="/" />}
+          element={
+            !isAuthenticated ? <SignUpPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />
+          }
         />
         <Route
           path="/login"
-          element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+          element={
+            !isAuthenticated ? <LoginPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />
+          }
         />
         <Route
           path="/notifications"
-          element={authUser ? <NotificationsPage /> : <Navigate to="/login" />}
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <NotificationsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
         />
         <Route
-          path="/call"
-          element={authUser ? <CallPage /> : <Navigate to="/login" />}
+          path="/call/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <CallPage />
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
         />
+
         <Route
-          path="/chat"
-          element={authUser ? <ChatPage /> : <Navigate to="/login" />}
+          path="/chat/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={false}>
+                <ChatPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
         />
+
         <Route
           path="/onboarding"
-          element={authUser ? <OnboardingPage /> : <Navigate to="/login" />}
+          element={
+            isAuthenticated ? (
+              !isOnboarded ? (
+                <OnboardingPage />
+              ) : (
+                <Navigate to="/" />
+              )
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
       </Routes>
-      <Toaster></Toaster>
+
+      <Toaster />
     </div>
   );
 };
-
 export default App;
