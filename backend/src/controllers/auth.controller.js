@@ -29,8 +29,10 @@ export async function signup(req, res) {
             });
         }
 
-        const idx = Math.floor(Math.random() * 100) + 1; // generate a number b/w 1 and 100
-        const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+        // Generate avatar using ui-avatars.com (reliable service)
+        const colors = ['0D8ABC', '3498db', '9b59b6', 'e74c3c', '1abc9c', 'f39c12', '2ecc71'];
+        const bgColor = colors[Math.floor(Math.random() * colors.length)];
+        const randomAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=${bgColor}&color=fff&size=200&bold=true`;
 
         const newUser = await User.create({
             email,

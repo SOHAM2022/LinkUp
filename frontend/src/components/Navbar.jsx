@@ -5,6 +5,7 @@ import ThemeSelector from "./ThemeSelector";
 import useLogout from "../hooks/useLogout";
 import { useQuery } from "@tanstack/react-query";
 import { getUnreadNotificationCount } from "../lib/api";
+import { getAvatarUrl } from "../lib/utils";
 
 const Navbar = () => {
   const { authUser } = useAuthUser();
@@ -55,7 +56,7 @@ const Navbar = () => {
 
           <div className="avatar">
             <div className="w-9 rounded-full">
-              <img src={authUser?.profilePic} alt="User Avatar" rel="noreferrer" />
+              <img src={getAvatarUrl(authUser?.profilePic, authUser?.fullName)} alt="User Avatar" rel="noreferrer" />
             </div>
           </div>
 

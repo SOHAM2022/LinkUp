@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  acceptFriendRequest, 
-  getFriendRequests, 
+import {
+  acceptFriendRequest,
+  getFriendRequests,
   getNotifications,
   markNotificationAsRead,
-  markAllNotificationsAsRead 
+  markAllNotificationsAsRead
 } from "../lib/api";
 import { BellIcon, ClockIcon, MessageSquareIcon, UserCheckIcon, CheckIcon } from "lucide-react";
 import NoNotificationsFound from "../components/NoNotificationsFound";
+import { getAvatarUrl } from "../lib/utils";
 
 const NotificationsPage = () => {
   const queryClient = useQueryClient();
@@ -91,52 +92,55 @@ const NotificationsPage = () => {
                 </h2>
 
                 <div className="space-y-3">
-                  {notifications.slice(0, 10).map((notification) => (
-                    <div
-                      key={notification._id}
-                      className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
-                        notification.read ? "bg-base-200" : "bg-primary/10 border-primary/20"
-                      }`}
-                      onClick={() => !notification.read && markAsReadMutation(notification._id)}
-                    >
-                      <div className="card-body p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="avatar mt-1 size-10 rounded-full">
-                            <img
-                              src={notification.sender.profilePic}
-                              alt={notification.sender.fullName}
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h3 className="font-semibold">{notification.sender.fullName}</h3>
-                                <p className="text-sm my-1">{notification.message}</p>
-                                <p className="text-xs flex items-center opacity-70">
-                                  <ClockIcon className="h-3 w-3 mr-1" />
-                                  {new Date(notification.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                                )}
-                                <div className={`badge ${
-                                  notification.type === 'friend_request' ? 'badge-primary' :
-                                  notification.type === 'friend_accepted' ? 'badge-success' :
-                                  'badge-secondary'
-                                }`}>
-                                  {notification.type === 'friend_request' ? 'Friend Request' :
-                                   notification.type === 'friend_accepted' ? 'Request Accepted' :
-                                   'Notification'}
+                  {notifications.slice(0, 10).map((notification) => {
+                    // Skip notifications with missing sender data
+                    if (!notification?.sender) return null;
+
+                    return (
+                      <div
+                        key={notification._id}
+                        className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${notification.read ? "bg-base-200" : "bg-primary/10 border-primary/20"
+                          }`}
+                        onClick={() => !notification.read && markAsReadMutation(notification._id)}
+                      >
+                        <div className="card-body p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="avatar mt-1 size-10 rounded-full">
+                              <img
+                                src={getAvatarUrl(notification.sender.profilePic, notification.sender.fullName)}
+                                alt={notification.sender.fullName || 'User'}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-semibold">{notification.sender.fullName || 'Unknown User'}</h3>
+                                  <p className="text-sm my-1">{notification.message}</p>
+                                  <p className="text-xs flex items-center opacity-70">
+                                    <ClockIcon className="h-3 w-3 mr-1" />
+                                    {new Date(notification.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {!notification.read && (
+                                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                  )}
+                                  <div className={`badge ${notification.type === 'friend_request' ? 'badge-primary' :
+                                    notification.type === 'friend_accepted' ? 'badge-success' :
+                                      'badge-secondary'
+                                    }`}>
+                                    {notification.type === 'friend_request' ? 'Friend Request' :
+                                      notification.type === 'friend_accepted' ? 'Request Accepted' :
+                                        'Notification'}
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -150,41 +154,46 @@ const NotificationsPage = () => {
                 </h2>
 
                 <div className="space-y-3">
-                  {incomingRequests.map((request) => (
-                    <div
-                      key={request._id}
-                      className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="card-body p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="avatar w-14 h-14 rounded-full bg-base-300">
-                              <img src={request.sender.profilePic} alt={request.sender.fullName} />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{request.sender.fullName}</h3>
-                              <div className="flex flex-wrap gap-1.5 mt-1">
-                                <span className="badge badge-secondary badge-sm">
-                                  Native: {request.sender.nativeLanguage}
-                                </span>
-                                <span className="badge badge-outline badge-sm">
-                                  Learning: {request.sender.learningLanguage}
-                                </span>
+                  {incomingRequests.map((request) => {
+                    // Skip requests with missing sender data
+                    if (!request?.sender) return null;
+
+                    return (
+                      <div
+                        key={request._id}
+                        className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="card-body p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="avatar w-14 h-14 rounded-full bg-base-300">
+                                <img src={getAvatarUrl(request.sender.profilePic, request.sender.fullName)} alt={request.sender.fullName || 'User'} />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{request.sender.fullName || 'Unknown User'}</h3>
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  <span className="badge badge-secondary badge-sm">
+                                    Native: {request.sender.nativeLanguage || 'N/A'}
+                                  </span>
+                                  <span className="badge badge-outline badge-sm">
+                                    Learning: {request.sender.learningLanguage || 'N/A'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => acceptRequestMutation(request._id)}
-                            disabled={isPending}
-                          >
-                            Accept
-                          </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => acceptRequestMutation(request._id)}
+                              disabled={isPending}
+                            >
+                              Accept
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -198,34 +207,39 @@ const NotificationsPage = () => {
                 </h2>
 
                 <div className="space-y-3">
-                  {acceptedRequests.map((notification) => (
-                    <div key={notification._id} className="card bg-base-200 shadow-sm">
-                      <div className="card-body p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="avatar mt-1 size-10 rounded-full">
-                            <img
-                              src={notification.recipient.profilePic}
-                              alt={notification.recipient.fullName}
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{notification.recipient.fullName}</h3>
-                            <p className="text-sm my-1">
-                              {notification.recipient.fullName} accepted your friend request
-                            </p>
-                            <p className="text-xs flex items-center opacity-70">
-                              <ClockIcon className="h-3 w-3 mr-1" />
-                              Recently
-                            </p>
-                          </div>
-                          <div className="badge badge-success">
-                            <MessageSquareIcon className="h-3 w-3 mr-1" />
-                            New Friend
+                  {acceptedRequests.map((notification) => {
+                    // Skip notifications with missing recipient data
+                    if (!notification?.recipient) return null;
+
+                    return (
+                      <div key={notification._id} className="card bg-base-200 shadow-sm">
+                        <div className="card-body p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="avatar mt-1 size-10 rounded-full">
+                              <img
+                                src={getAvatarUrl(notification.recipient.profilePic, notification.recipient.fullName)}
+                                alt={notification.recipient.fullName || 'User'}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold">{notification.recipient.fullName || 'Unknown User'}</h3>
+                              <p className="text-sm my-1">
+                                {notification.recipient.fullName || 'Someone'} accepted your friend request
+                              </p>
+                              <p className="text-xs flex items-center opacity-70">
+                                <ClockIcon className="h-3 w-3 mr-1" />
+                                Recently
+                              </p>
+                            </div>
+                            <div className="badge badge-success">
+                              <MessageSquareIcon className="h-3 w-3 mr-1" />
+                              New Friend
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -38,8 +38,11 @@ const OnboardingPage = () => {
   };
 
   const handleRandomAvatar = () => {
-    const idx = Math.floor(Math.random() * 100) + 1; // 1-100 included
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    // Generate avatar using ui-avatars.com (reliable service)
+    const colors = ['0D8ABC', '3498db', '9b59b6', 'e74c3c', '1abc9c', 'f39c12', '2ecc71'];
+    const bgColor = colors[Math.floor(Math.random() * colors.length)];
+    const name = formState.fullName || 'User';
+    const randomAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&size=200&bold=true`;
 
     setFormState({ ...formState, profilePic: randomAvatar });
     toast.success("Random profile picture generated!");
